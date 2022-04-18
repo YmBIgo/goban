@@ -1,0 +1,101 @@
+.goban {
+	background-color: #dcb462;
+	width: 600px;
+	height: 600px;
+}
+
+.goban-masu {
+	padding-left: 60px;
+	padding-top: 55px;
+	display: inline-block;
+	background-repeat: no-repeat;
+	position: relative;
+}
+.background-none{
+	margin-top: -47px;
+	margin-left: -47px;
+	width: 35px;
+	height: 35px;
+}
+.background-black-stone{
+	background-size: contain;
+	background-repeat: no-repeat;
+	margin-top: -47px;
+	margin-left: -47px;
+	width: 35px;
+	height: 35px;
+	background-image: url("https://storage.googleapis.com/kurihara_kazuya_image/goban/goishi_black.png");
+}
+.background-white-stone {
+	background-size: contain;
+	background-repeat: no-repeat;
+	margin-top: -47px;
+	margin-left: -47px;
+	width: 35px;
+	height: 35px;
+	background-image: url("https://storage.googleapis.com/kurihara_kazuya_image/goban/goishi_white.png");
+}
+
+.goban-right-top {
+  background-image:
+    linear-gradient(to bottom, #000, #000),
+    linear-gradient(to right, #000, #000);
+  background-size: 2px 50%, 50% 2px;
+  background-position: center bottom, left center;
+}
+.goban-right-bottom{
+  background-image:
+    linear-gradient(to bottom, #000, #000),
+    linear-gradient(to right, #000, #000);
+  background-size: 2px 50%, 50% 2px;
+  background-position: center top, left center;
+}
+.goban-left-top{
+  background-image:
+    linear-gradient(to bottom, #000, #000),
+    linear-gradient(to right, #000, #000);
+  background-size: 2px 50%, 50% 2px;
+  background-position: center bottom, right center;
+}
+.goban-left-bottom{
+  background-image:
+    linear-gradient(to bottom, #000, #000),
+    linear-gradient(to right, #000, #000);
+  background-size: 2px 50%, 50% 2px;
+  background-position: center top, right center;
+}
+.goban-right-line{ 
+  background-image:
+    linear-gradient(to bottom, #000, #000),
+    linear-gradient(to right, #000, #000);
+  background-size: 2px 100%, 50% 2px;
+  background-position: center center, center left;
+}
+.goban-left-line{
+  background-image:
+    linear-gradient(to bottom, #000, #000),
+    linear-gradient(to right, #000, #000);
+  background-size: 2px 100%, 50% 2px;
+  background-position: center center, center right;
+}
+.goban-top-line{
+  background-image:
+    linear-gradient(to bottom, #000, #000),
+    linear-gradient(to right, #000, #000);
+  background-size: 2px 50%, 100% 2px;
+  background-position: center bottom, center center;
+}
+.goban-bottom-line{
+  background-image:
+    linear-gradient(to bottom, #000, #000),
+    linear-gradient(to right, #000, #000);
+  background-size: 2px 50%, 100% 2px;
+  background-position: top center, center center;
+}
+.goban-center{
+	background-image:
+		linear-gradient(to bottom, #000, #000),
+		linear-gradient(to right, #000, #000);
+	background-size: 2px 100%, 100% 2px;
+	background-position: center center;
+}
