@@ -5,34 +5,48 @@
 }
 
 .goban-masu {
-	padding-left: 60px;
-	padding-top: 55px;
+/*	padding-left: 60px;
+	padding-top: 55px;*/
+	padding-left: 30px;
+	padding-top: 25px;
 	display: inline-block;
 	background-repeat: no-repeat;
 	position: relative;
 }
 .background-none{
-	margin-top: -47px;
+/*	margin-top: -47px;
 	margin-left: -47px;
 	width: 35px;
-	height: 35px;
+	height: 35px;*/
+	margin-top: -24px;
+	margin-left: -24px;
+	width: 20px;
+	height: 20px;
 }
 .background-black-stone{
 	background-size: contain;
 	background-repeat: no-repeat;
-	margin-top: -47px;
+/*	margin-top: -47px;
 	margin-left: -47px;
 	width: 35px;
-	height: 35px;
+	height: 35px;*/
+	margin-top: -24px;
+	margin-left: -24px;
+	width: 20px;
+	height: 20px;
 	background-image: url("https://storage.googleapis.com/kurihara_kazuya_image/goban/goishi_black.png");
 }
 .background-white-stone {
 	background-size: contain;
 	background-repeat: no-repeat;
-	margin-top: -47px;
+/*	margin-top: -47px;
 	margin-left: -47px;
 	width: 35px;
-	height: 35px;
+	height: 35px;*/
+	margin-top: -24px;
+	margin-left: -24px;
+	width: 20px;
+	height: 20px;
 	background-image: url("https://storage.googleapis.com/kurihara_kazuya_image/goban/goishi_white.png");
 }
 

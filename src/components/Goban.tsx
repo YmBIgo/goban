@@ -6,9 +6,11 @@ import white_stone from "../public/goishi_white.png"
 
 const Goban = () => {
 
-	const initial_goban = Array(9).fill("")
+	const GOMAN_WIDTH = 19
+
+	const initial_goban = Array(GOMAN_WIDTH).fill("")
 	initial_goban.forEach((_, i) => {
-		initial_goban[i] = Array(9).fill("")
+		initial_goban[i] = Array(GOMAN_WIDTH).fill("")
 	})
 
 	const [goban_state, set_goban_state] = useState<string[][]>(initial_goban)
@@ -31,19 +33,19 @@ const Goban = () => {
 		const className = ""
 		if ( i == 0 && j == 0) {
 			return "goban-masu goban-left-top"
-		} else if ( i == 0 && j == 8 ) {
+		} else if ( i == 0 && j == (GOMAN_WIDTH -1) ) {
 			return "goban-masu goban-right-top"
-		} else if ( i == 8 && j == 0 ) {
+		} else if ( i == (GOMAN_WIDTH -1) && j == 0 ) {
 			return "goban-masu goban-left-bottom"
-		} else if ( i == 8 && j == 8 ) {
+		} else if ( i == (GOMAN_WIDTH -1) && j == (GOMAN_WIDTH -1) ) {
 			return "goban-masu goban-right-bottom"
 		} else if ( i == 0 ) {
 			return "goban-masu goban-top-line"
-		} else if ( i == 8 ) {
+		} else if ( i == (GOMAN_WIDTH -1) ) {
 			return "goban-masu goban-bottom-line"
 		} else if ( j == 0 ) {
 			return "goban-masu goban-left-line"
-		} else if ( j == 8 ) {
+		} else if ( j == (GOMAN_WIDTH -1) ) {
 			return "goban-masu goban-right-line"
 		}
 		return "goban-masu goban-center"
@@ -123,8 +125,8 @@ const Goban = () => {
 		let atari_goishi: number[][] = []
 		block.forEach((goishi) => {
 			const left_ishi		= goishi[1] - 1 > -1 ? [goishi[0], goishi[1] - 1] : []
-			const right_ishi 	= goishi[1] + 1 < 9 ? [goishi[0], goishi[1] + 1] : []
-			const top_ishi		= goishi[0] + 1 < 9 ? [goishi[0] + 1, goishi[1]] : []
+			const right_ishi 	= goishi[1] + 1 < GOMAN_WIDTH ? [goishi[0], goishi[1] + 1] : []
+			const top_ishi		= goishi[0] + 1 < GOMAN_WIDTH ? [goishi[0] + 1, goishi[1]] : []
 			const bottom_ishi	= goishi[0] - 1 > -1 ? [goishi[0] - 1, goishi[1]] : []
 			if (left_ishi != [] && !is_2dimension_array_include(block, left_ishi)) {
 				atari_goishi.push(left_ishi)
@@ -143,6 +145,12 @@ const Goban = () => {
 		atari_goishi = atari_goishi.filter((a_g) => {
 			return a_g[0] != undefined
 		})
+		// atari_goishi = atari_goishi.filter((a_g) => {
+		// 	if ( is_2dimension_array_include(a_g, banmen_opposite) ) {
+		// 		return false
+		// 	}
+		// 	return true
+		// })
 		console.log("atari goishi ", block, atari_goishi)
 		let atari_counter = 0
 		// console.log("atari evaluation : ", block)
@@ -212,8 +220,8 @@ const Goban = () => {
 	const judge_ko = (current_move: number[], banmen: number[][], banmen_opposite: number[][]) => {
 		if ( current_phase == "w" ) {
 			const left_ishi		= current_move[1] - 1 > -1 ? [current_move[0], current_move[1] - 1] : []
-			const right_ishi 	= current_move[1] + 1 < 9  ? [current_move[0], current_move[1] + 1] : []
-			const top_ishi		= current_move[0] + 1 < 9  ? [current_move[0] + 1, current_move[1]] : []
+			const right_ishi 	= current_move[1] + 1 < GOMAN_WIDTH  ? [current_move[0], current_move[1] + 1] : []
+			const top_ishi		= current_move[0] + 1 < GOMAN_WIDTH  ? [current_move[0] + 1, current_move[1]] : []
 			const bottom_ishi	= current_move[0] - 1 > -1 ? [current_move[0] - 1, current_move[1]] : []
 			let surrounding_ishi = [left_ishi, right_ishi, top_ishi, bottom_ishi]
 			surrounding_ishi = surrounding_ishi.filter((s_ishi) => s_ishi != [])
@@ -246,8 +254,8 @@ const Goban = () => {
 			})
 			ishi_result.forEach((ishi) => {
 				const left_ishi		= ishi![1] - 1 > -1 ? [ishi![0], ishi![1] - 1] : []
-				const right_ishi 	= ishi![1] + 1 < 9  ? [ishi![0], ishi![1] + 1] : []
-				const top_ishi		= ishi![0] + 1 < 9  ? [ishi![0] + 1, ishi![1]] : []
+				const right_ishi 	= ishi![1] + 1 < GOMAN_WIDTH ? [ishi![0], ishi![1] + 1] : []
+				const top_ishi		= ishi![0] + 1 < GOMAN_WIDTH ? [ishi![0] + 1, ishi![1]] : []
 				const bottom_ishi	= ishi![0] - 1 > -1 ? [ishi![0] - 1, ishi![1]] : []
 				//
 				const left_ishi_exist = is_2dimension_array_include(banmen_opposite, left_ishi)
@@ -263,8 +271,8 @@ const Goban = () => {
 			console.log("goishi block black", ishi_result)
 		} else if (current_phase == "b") {
 			const left_ishi		= current_move[1] - 1 > -1 ? [current_move[0], current_move[1] - 1] : []
-			const right_ishi 	= current_move[1] + 1 < 9  ? [current_move[0], current_move[1] + 1] : []
-			const top_ishi		= current_move[0] + 1 < 9  ? [current_move[0] + 1, current_move[1]] : []
+			const right_ishi 	= current_move[1] + 1 < GOMAN_WIDTH ? [current_move[0], current_move[1] + 1] : []
+			const top_ishi		= current_move[0] + 1 < GOMAN_WIDTH ? [current_move[0] + 1, current_move[1]] : []
 			const bottom_ishi	= current_move[0] - 1 > -1 ? [current_move[0] - 1, current_move[1]] : []
 			let surrounding_ishi = [left_ishi, right_ishi, top_ishi, bottom_ishi]
 			surrounding_ishi = surrounding_ishi.filter((s_ishi) => s_ishi != [])
@@ -297,8 +305,8 @@ const Goban = () => {
 			})
 			ishi_result.forEach((ishi) => {
 				const left_ishi		= ishi![1] - 1 > -1 ? [ishi![0], ishi![1] - 1] : []
-				const right_ishi 	= ishi![1] + 1 < 9  ? [ishi![0], ishi![1] + 1] : []
-				const top_ishi		= ishi![0] + 1 < 9  ? [ishi![0] + 1, ishi![1]] : []
+				const right_ishi 	= ishi![1] + 1 < GOMAN_WIDTH ? [ishi![0], ishi![1] + 1] : []
+				const top_ishi		= ishi![0] + 1 < GOMAN_WIDTH ? [ishi![0] + 1, ishi![1]] : []
 				const bottom_ishi	= ishi![0] - 1 > -1 ? [ishi![0] - 1, ishi![1]] : []
 				//
 				const left_ishi_exist = is_2dimension_array_include(banmen_opposite, left_ishi)
@@ -490,7 +498,7 @@ const Goban = () => {
 									</div>
 								}
 							</div>
-							{j_index == 8 && <br/>}
+							{j_index == (GOMAN_WIDTH -1) && <br/>}
 						</>
 					)
 				})
