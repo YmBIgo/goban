@@ -52,6 +52,7 @@ const Goban = () => {
 		current_goishi_block.current = []
 		goishi_block_black.current = []
 		goishi_block_white.current = []
+		console.log("---------------- game start ----------------\n\n")
 	}
 
 	const onClickMasu = (i: number, j: number) => {
@@ -68,38 +69,125 @@ const Goban = () => {
 		let banmen_goishi_black_copy = banmen_goishi_black.slice()
 		let banmen_goishi_white_copy = banmen_goishi_white.slice()
 
-		// banmen ishi black
 		if (current_phase == "b") {
+			// banmen ishi black
 			banmen_goishi_black_copy.push([i, j])
 			set_banmen_goishi_black(banmen_goishi_black_copy)
-			// calculate block
-			calculate_goishi_block(banmen_goishi_black_copy, banmen_goishi_white_copy, current_phase)
 		}
-		// banmen ishi white
+		// calculate block
+		calculate_goishi_block(banmen_goishi_black_copy, banmen_goishi_white_copy, current_phase)
+
 		if (current_phase == "w") {
+			// banmen ishi white
 			banmen_goishi_white_copy.push([i, j])
 			set_banmen_goishi_white(banmen_goishi_white_copy)
-			// calculate block
-			calculate_goishi_block(banmen_goishi_black_copy, banmen_goishi_white_copy, current_phase)
 		}
+		// calculate block
+		calculate_goishi_block(banmen_goishi_black_copy, banmen_goishi_white_copy, current_phase)
 
 		// calc atari
-		calc_atari()
+		calc_atari(banmen_goishi_black_copy, banmen_goishi_white_copy)
 
 		// next move
 		const next_move = current_phase == "b" ? "w" : "b"
 		set_current_phase(next_move)
 	}
 
-	const calc_atari = () => {
+	const calc_atari = (banmen_goishi_black_: number[][], banmen_goishi_white_: number[][]) => {
+		goishi_block_black.current.forEach((b_block) => {
+			console.log("----------- black -----------")
+			calc_atari_surround(b_block, banmen_goishi_white_, banmen_goishi_black_)
+		})
+		goishi_block_white.current.forEach((w_block) => {
+			console.log("----------- white -----------")
+			calc_atari_surround(w_block, banmen_goishi_black_, banmen_goishi_white_)
+		})
+	}
 
+	const calc_atari_surround = (block: number[][], banmen: number[][], banmen_opposite: number[][]) => {
+		let atari_goishi: number[][] = []
+		block.forEach((goishi) => {
+			const left_ishi		= goishi[1] - 1 > -1 ? [goishi[0], goishi[1] - 1] : []
+			const right_ishi 	= goishi[1] + 1 < 9 ? [goishi[0], goishi[1] + 1] : []
+			const top_ishi		= goishi[0] + 1 < 9 ? [goishi[0] + 1, goishi[1]] : []
+			const bottom_ishi	= goishi[0] - 1 > -1 ? [goishi[0] - 1, goishi[1]] : []
+			if (left_ishi != [] && !is_2dimension_array_include(block, left_ishi)) {
+				atari_goishi.push(left_ishi)
+			}
+			if (right_ishi != [] && !is_2dimension_array_include(block, right_ishi)) {
+				atari_goishi.push(right_ishi)
+			}
+			if (top_ishi != [] && !is_2dimension_array_include(block, top_ishi)) {
+				atari_goishi.push(top_ishi)
+			}
+			if (bottom_ishi != [] && !is_2dimension_array_include(block, bottom_ishi)) {
+				atari_goishi.push(bottom_ishi)
+			}
+		})
+		atari_goishi = atari_goishi.filter((x, i, self) => self.indexOf(x) === i)
+		atari_goishi = atari_goishi.filter((a_g) => {
+			return a_g[0] != undefined
+		})
+		console.log("atari goishi ", block, atari_goishi)
+		let atari_counter = 0
+		// console.log("atari evaluation : ", block)
+		for (const atari_g of atari_goishi) {
+			if (!is_2dimension_array_include(banmen, atari_g)) {
+				break
+			}
+			atari_counter += 1
+			// console.log("atari contains ", atari_g)
+		}
+		if (atari_counter == atari_goishi.length) {
+			//
+			// console.log("atari gets")
+			if (current_phase == "w") {
+				let banmen_goishi_black_copy = banmen_opposite
+				console.log(block, banmen_goishi_black_copy)
+				block.forEach((b) => {
+					if (is_2dimension_array_include(banmen_goishi_black_copy, b)) {
+						banmen_goishi_black_copy = banmen_goishi_black_copy.filter((banmen_goishi_b) => {
+							if (banmen_goishi_b[0] == b[0] && banmen_goishi_b[1] == b[1]) {
+								return false
+							}
+							return true
+						})
+					}
+				})
+				set_banmen_goishi_black(banmen_goishi_black_copy)
+				const goban_state_copy = goban_state
+				block.forEach((b) => {
+					goban_state_copy[b[0]][b[1]] = ""
+				})
+				set_goban_state(goban_state_copy)
+			} else if (current_phase == "b") {
+				let banmen_goishi_white_copy = banmen_opposite
+				console.log(block, banmen_goishi_white_copy)
+				block.forEach((b) => {
+					if (is_2dimension_array_include(banmen_goishi_white_copy, b)) {
+						banmen_goishi_white_copy = banmen_goishi_white_copy.filter((banmen_goishi_b) => {
+							if (banmen_goishi_b[0] == b[0] && banmen_goishi_b[1] == b[1]) {
+								return false
+							}
+							return true
+						})
+					}
+				})
+				set_banmen_goishi_white(banmen_goishi_white_copy)
+				const goban_state_copy = goban_state
+				block.forEach((b) => {
+					goban_state_copy[b[0]][b[1]] = ""
+				})
+				set_goban_state(goban_state_copy)
+			}
+		}
 	}
 
 	const calculate_goishi_block = (banmen_goishi_black_copy: number[][], banmen_goishi_white_copy: number[][], current_phase: string) => {
 		let banmen_goishi_result = []
 		goishi_block_black.current = []
 		goishi_block_white.current = []
-		if(current_phase == "b") {
+		// if(current_phase == "b") {
 			banmen_goishi_black_copy.forEach((ishi) => {
 				current_goishi_block.current = []
 				// check 
@@ -113,13 +201,12 @@ const Goban = () => {
 				current_goishi_block.current = current_goishi_block_copy
 				// 
 				each_calculate_goishi_block(ishi, banmen_goishi_black_copy, "")
-				console.log("final black ishi", current_goishi_block.current)
 				// 
 				const goishi_block_black_copy = goishi_block_black.current.slice()
 				goishi_block_black_copy.push(current_goishi_block.current)
 				goishi_block_black.current = goishi_block_black_copy
 			})
-		} else if (current_phase == "w") {
+		// } else if (current_phase == "w") {
 			banmen_goishi_white_copy.forEach((ishi) => {
 				current_goishi_block.current = []
 				const is_ishi_exist = is_2dimension_array_include(goishi_block_white.current.flat(), ishi)
@@ -132,13 +219,12 @@ const Goban = () => {
 				current_goishi_block.current = current_goishi_block_copy
 				//
 				each_calculate_goishi_block(ishi, banmen_goishi_white_copy, "")
-				console.log("final white ishi", current_goishi_block.current)
 				//
 				const goishi_block_white_copy = goishi_block_white.current.slice()
 				goishi_block_white_copy.push(current_goishi_block.current)
 				goishi_block_white.current = goishi_block_white_copy
 			})
-		}
+		// }
 	}
 
 	const each_calculate_goishi_block = (goishi: number[], banmen_goishi: number[][], houkou: string) => {
@@ -179,11 +265,10 @@ const Goban = () => {
 			current_goishi_vector_array_copy.push(current_goishi_vector.current)
 			current_goishi_vector_array.current = current_goishi_vector_array_copy
 			// 
-			console.log("left find", left_ishi)
+			// console.log("left find", left_ishi)
 			current_goishi_block_copy.push(left_ishi)
 			current_goishi_block.current = current_goishi_block_copy
 			each_calculate_goishi_block(left_ishi, banmen_goishi, "left")
-			console.log("current ishi", current_goishi_block_copy)
 		}
 		if (houkou != "left" && banmen_goishi_flat.includes(right_ishi_str)) {
 			const current_goishi_block_copy = current_goishi_block.current.slice()
@@ -197,11 +282,10 @@ const Goban = () => {
 			current_goishi_vector_array_copy.push(current_goishi_vector.current)
 			current_goishi_vector_array.current = current_goishi_vector_array_copy
 			// 
-			console.log("right find", right_ishi)
+			// console.log("right find", right_ishi)
 			current_goishi_block_copy.push(right_ishi)
 			current_goishi_block.current = current_goishi_block_copy
 			each_calculate_goishi_block(right_ishi, banmen_goishi, "right")
-			console.log("current ishi", current_goishi_block_copy)
 		}
 		if (houkou != "bottom" && banmen_goishi_flat.includes(top_ishi_str)) {
 			const current_goishi_block_copy = current_goishi_block.current.slice()
@@ -215,11 +299,10 @@ const Goban = () => {
 			current_goishi_vector_array_copy.push(current_goishi_vector.current)
 			current_goishi_vector_array.current = current_goishi_vector_array_copy
 			// 
-			console.log("top find", top_ishi)
+			// console.log("top find", top_ishi)
 			current_goishi_block_copy.push(top_ishi)
 			current_goishi_block.current = current_goishi_block_copy
 			each_calculate_goishi_block(top_ishi, banmen_goishi, "top")
-			console.log("current ishi", current_goishi_block_copy)
 		}
 		if (houkou != "top" && banmen_goishi_flat.includes(bottom_ishi_str)) {
 			const current_goishi_block_copy = current_goishi_block.current.slice()
@@ -233,7 +316,7 @@ const Goban = () => {
 			current_goishi_vector_array_copy.push(current_goishi_vector.current)
 			current_goishi_vector_array.current = current_goishi_vector_array_copy
 			//
-			console.log("bottom find", bottom_ishi)
+			// console.log("bottom find", bottom_ishi)
 			current_goishi_block_copy.push(bottom_ishi)
 			current_goishi_block.current = current_goishi_block_copy
 			each_calculate_goishi_block(bottom_ishi, banmen_goishi, "bottom")
@@ -243,6 +326,7 @@ const Goban = () => {
 
 	const is_2dimension_array_include = (array: number[][], item: number[]) => {
 		const mapped_array = array.map((a) => a[0].toString() + a[1].toString())
+		if (!item[0] && !item[1]) { return false }
 		const mapped_item = item[0].toString() + item[1].toString()
 		return mapped_array.includes(mapped_item) 
 	}
