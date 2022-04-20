@@ -14,7 +14,7 @@ const Goban = () => {
 	})
 
 	const [goban_state, set_goban_state] = useState<string[][]>(initial_goban)
-	const [current_phase, set_current_phase] = useState<string>("b")
+	const current_phase = useRef<string>("b")
 	const [banmen_goishi_black, set_banmen_goishi_black] = useState<number[][]>([])
 	const [banmen_goishi_white, set_banmen_goishi_white] = useState<number[][]>([])
 	const goishi_block_black = useRef<number[][][]>([])
@@ -28,6 +28,9 @@ const Goban = () => {
 
 	const [agehama_black, set_agehama_black] = useState<number>(0)
 	const [agehama_white, set_agehama_white] = useState<number>(0)
+
+	const taikyoku_tezyun = useRef<number>(0)
+	const tezyun = useRef<number[][]>([])
 
 	const calculate_goban_css = (i: number, j: number) => {
 		const className = ""
@@ -53,7 +56,7 @@ const Goban = () => {
 
 	const initializeGoban = () => {
 		set_goban_state(initial_goban)
-		set_current_phase("b")
+		current_phase.current = "b"
 		set_banmen_goishi_black([])
 		set_banmen_goishi_white([])
 		current_goishi_block.current = []
@@ -65,7 +68,7 @@ const Goban = () => {
 	}
 
 	const onClickMasu = (i: number, j: number) => {
-		console.log(i, j)
+		console.log(i, j, current_phase.current)
 		// ko
 		if (ko[0] == i && ko[1] == j) {
 			return
@@ -75,28 +78,28 @@ const Goban = () => {
 		if (goban_state_copy[i][j] != "") {
 			return
 		}
-		goban_state_copy[i][j] = current_phase
+		goban_state_copy[i][j] = current_phase.current
 		set_goban_state(goban_state_copy)
 
 		// banmen ishi
 		let banmen_goishi_black_copy = banmen_goishi_black.slice()
 		let banmen_goishi_white_copy = banmen_goishi_white.slice()
 
-		if (current_phase == "b") {
+		if (current_phase.current == "b") {
 			// banmen ishi black
 			banmen_goishi_black_copy.push([i, j])
 			set_banmen_goishi_black(banmen_goishi_black_copy)
 		}
 		// calculate block
-		calculate_goishi_block(banmen_goishi_black_copy, banmen_goishi_white_copy, current_phase)
+		calculate_goishi_block(banmen_goishi_black_copy, banmen_goishi_white_copy)
 
-		if (current_phase == "w") {
+		if (current_phase.current == "w") {
 			// banmen ishi white
 			banmen_goishi_white_copy.push([i, j])
 			set_banmen_goishi_white(banmen_goishi_white_copy)
 		}
 		// calculate block
-		calculate_goishi_block(banmen_goishi_black_copy, banmen_goishi_white_copy, current_phase)
+		calculate_goishi_block(banmen_goishi_black_copy, banmen_goishi_white_copy)
 		// suicide
 		const zisatu_result = check_zisatu([i, j], banmen_goishi_black_copy, banmen_goishi_white_copy)
 		if (zisatu_result == false) {
@@ -107,8 +110,8 @@ const Goban = () => {
 		calc_atari(banmen_goishi_black_copy, banmen_goishi_white_copy, [i, j])
 
 		// next move
-		const next_move = current_phase == "b" ? "w" : "b"
-		set_current_phase(next_move)
+		const next_move = current_phase.current == "b" ? "w" : "b"
+		current_phase.current = next_move
 		// next move ko
 		if (ko[0] != -1 || ko[1] != -1) {
 			setKo(ko => [-1, -1])
@@ -116,7 +119,7 @@ const Goban = () => {
 	}
 
 	const check_zisatu = (current_move: number[], banmen_goishi_black_: number[][], banmen_goishi_white_: number[][]) => {
-		if (current_phase == "b") {
+		if (current_phase.current == "b") {
 			const goishi_block_black_copy = goishi_block_black.current
 			let current_goishi_block: number[][] = [];
 			goishi_block_black_copy.forEach((goban_black_b) => {
@@ -142,7 +145,7 @@ const Goban = () => {
 			current_goishi_surrounding = current_goishi_surrounding.filter((s_g) => {
 				return s_g[0] != undefined
 			})
-			console.log("surrounding goishi", current_goishi_block, current_goishi_surrounding)
+			// console.log("surrounding goishi", current_goishi_block, current_goishi_surrounding)
 			let surrounding_flag = 0
 			for (const c_s_goishi of current_goishi_surrounding){
 				if (!is_2dimension_array_include(banmen_goishi_white_, c_s_goishi)) {
@@ -207,7 +210,7 @@ const Goban = () => {
 				set_goban_state(goban_state_copy)
 				return false
 			}
-		} else if (current_phase == "w") {
+		} else if (current_phase.current == "w") {
 			const goishi_block_white_copy = goishi_block_white.current
 			let current_goishi_block: number[][] = [];
 			goishi_block_white_copy.forEach((goban_white_b) => {
@@ -353,7 +356,7 @@ const Goban = () => {
 		if (atari_counter == atari_goishi.length) {
 			//
 			// console.log("atari gets")
-			if (current_phase == "w") {
+			if (current_phase.current == "w") {
 				if (is_2dimension_array_include(block, current_move)) {
 					judge_ko(current_move, banmen, banmen_opposite)
 					return
@@ -377,7 +380,7 @@ const Goban = () => {
 					goban_state_copy[b[0]][b[1]] = ""
 				})
 				set_goban_state(goban_state_copy)
-			} else if (current_phase == "b") {
+			} else if (current_phase.current == "b") {
 				if (is_2dimension_array_include(block, current_move)) {
 					judge_ko(current_move, banmen, banmen_opposite)
 					return
@@ -406,7 +409,7 @@ const Goban = () => {
 
 	// impl ko
 	const judge_ko = (current_move: number[], banmen: number[][], banmen_opposite: number[][]) => {
-		if ( current_phase == "w" ) {
+		if ( current_phase.current == "w" ) {
 			const left_ishi		= current_move[1] - 1 > -1 ? [current_move[0], current_move[1] - 1] : []
 			const right_ishi 	= current_move[1] + 1 < GOMAN_WIDTH  ? [current_move[0], current_move[1] + 1] : []
 			const top_ishi		= current_move[0] + 1 < GOMAN_WIDTH  ? [current_move[0] + 1, current_move[1]] : []
@@ -457,7 +460,7 @@ const Goban = () => {
 			})
 			// console.log("goishi black", goishi_block_black_copy)
 			console.log("goishi block black", ishi_result)
-		} else if (current_phase == "b") {
+		} else if (current_phase.current == "b") {
 			const left_ishi		= current_move[1] - 1 > -1 ? [current_move[0], current_move[1] - 1] : []
 			const right_ishi 	= current_move[1] + 1 < GOMAN_WIDTH ? [current_move[0], current_move[1] + 1] : []
 			const top_ishi		= current_move[0] + 1 < GOMAN_WIDTH ? [current_move[0] + 1, current_move[1]] : []
@@ -511,7 +514,7 @@ const Goban = () => {
 		}
 	}
 
-	const calculate_goishi_block = (banmen_goishi_black_copy: number[][], banmen_goishi_white_copy: number[][], current_phase: string) => {
+	const calculate_goishi_block = (banmen_goishi_black_copy: number[][], banmen_goishi_white_copy: number[][]) => {
 		let banmen_goishi_result = []
 		goishi_block_black.current = []
 		goishi_block_white.current = []
@@ -658,49 +661,128 @@ const Goban = () => {
 		return mapped_array.includes(mapped_item) 
 	}
 
+	const startTaikyoku1 = () => {
+		taikyoku_tezyun.current = 0
+		const tezyun1 = [[3, 3], [3, 15], [15, 3], [15, 15]]
+		const id = setInterval(() => {
+			//
+			onClickMasu(tezyun.current[taikyoku_tezyun.current][0], tezyun.current[taikyoku_tezyun.current][1])
+			taikyoku_tezyun.current = taikyoku_tezyun.current + 1
+			if ( taikyoku_tezyun.current == tezyun.current.length ) {
+				clearInterval(id)
+			}
+		}, 1000)
+	}
+
+	const loadTaikyoku = (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (!e.target.files) { return }
+		const inputFile = e.target.files[0]
+		const reader = new FileReader()
+		let file_result;
+		reader.readAsText(e.target.files[0]);
+		reader.onload = function(event){
+			file_result = reader.result as string
+			parseSgf(file_result)
+		}
+	}
+
+	const parseSgf = (file_content: string) => {
+		let file_array = file_content.split(";")
+		file_array = file_array.map((f) => {
+			if (f[0] == "B" || f[0] == "W") {
+				return f.slice(2, 4)
+			}
+			return ""
+		}).filter((f) => {
+			if (f == "") { return false }
+			return true
+		})
+		const tezyun_result: number[][] = file_array.map((str) => {
+			const num1 = covertAlphabetToNum(str[0])
+			const num2 = covertAlphabetToNum(str[1])
+			return [num1, num2]
+		})
+		console.log(tezyun_result)
+		tezyun.current = tezyun_result
+	}
+
+	const covertAlphabetToNum = (str: string) => {
+		if (str == "a") { return 0 }
+		if (str == "b") { return 1 }
+		if (str == "c") { return 2 }
+		if (str == "d") { return 3 }
+		if (str == "e") { return 4 }
+		if (str == "f") { return 5 }
+		if (str == "g") { return 6 }
+		if (str == "h") { return 7 }
+		if (str == "i") { return 8 }
+		if (str == "j") { return 9 }
+		if (str == "k") { return 10 }
+		if (str == "l") { return 11 }
+		if (str == "m") { return 12 }
+		if (str == "n") { return 13 }
+		if (str == "o") { return 14 }
+		if (str == "p") { return 15 }
+		if (str == "q") { return 16 }
+		if (str == "r") { return 17 }
+		if (str == "s") { return 18 }
+		return 0
+	}
+
 	return(
-		<div className="goban">
-			{goban_state.map((goban_line, i_index) => (
-				goban_line.map((goban_masu, j_index) => {
-					const className = calculate_goban_css(i_index, j_index)
-					return(
-						<>
-							<div
-								className={className}
-								onClick={() => onClickMasu(i_index, j_index)}
-							>
-								{ goban_state[i_index][j_index] == "" &&
-									<div className="background-none">
-										{"　"}
-									</div>
-								}
-								{ goban_state[i_index][j_index] == "b" &&
-									<div className="background-black-stone">
-										{"　"}
-									</div>
-								}
-								{ goban_state[i_index][j_index] == "w" &&
-									<div className="background-white-stone">
-										{"　"}
-									</div>
-								}
-							</div>
-							{j_index == (GOMAN_WIDTH -1) && <br/>}
-						</>
-					)
-				})
-			))}
-			<button onClick={() => initializeGoban()}>
-				初期化する
-			</button>
-			<br/>
-			<div>
-				<span>黒アゲハマ{agehama_black}個</span>
-				<span>白アゲハマ{agehama_white}個</span>
+		<>
+			<div className="goban">
+				{goban_state.map((goban_line, i_index) => (
+					goban_line.map((goban_masu, j_index) => {
+						const className = calculate_goban_css(i_index, j_index)
+						return(
+							<>
+								<div
+									className={className}
+									onClick={() => onClickMasu(i_index, j_index)}
+								>
+									{ goban_state[i_index][j_index] == "" &&
+										<div className="background-none">
+											{"　"}
+										</div>
+									}
+									{ goban_state[i_index][j_index] == "b" &&
+										<div className="background-black-stone">
+											{"　"}
+										</div>
+									}
+									{ goban_state[i_index][j_index] == "w" &&
+										<div className="background-white-stone">
+											{"　"}
+										</div>
+									}
+								</div>
+								{j_index == (GOMAN_WIDTH -1) && <br/>}
+							</>
+						)
+					})
+				))}
+				<button onClick={() => initializeGoban()}>
+					初期化する
+				</button>
 				<br/>
-				<span>コウ [{ko[0]}, {ko[1]}]</span>
+				<div>
+					<span>黒アゲハマ{agehama_black}個</span>
+					<span>白アゲハマ{agehama_white}個</span>
+					<br/>
+					<span>コウ [{ko[0]}, {ko[1]}]</span>
+				</div>
 			</div>
-		</div>
+			<div>
+				<input
+					type="file"
+					accept="sgf"
+					onChange={(e) => loadTaikyoku(e)}
+				/>
+				<br/>
+				対局１：<button onClick={() => startTaikyoku1()}>開始</button>
+			</div>
+		</>
 	)
 }
 
