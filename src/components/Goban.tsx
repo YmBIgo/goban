@@ -15,8 +15,10 @@ const Goban = () => {
 
 	const [goban_state, set_goban_state] = useState<string[][]>(initial_goban)
 	const current_phase = useRef<string>("b")
-	const [banmen_goishi_black, set_banmen_goishi_black] = useState<number[][]>([])
-	const [banmen_goishi_white, set_banmen_goishi_white] = useState<number[][]>([])
+	// const [banmen_goishi_black, set_banmen_goishi_black] = useState<number[][]>([])
+	// const [banmen_goishi_white, set_banmen_goishi_white] = useState<number[][]>([])
+	const banmen_goishi_black = useRef<number[][]>([])
+	const banmen_goishi_white = useRef<number[][]>([])
 	const goishi_block_black = useRef<number[][][]>([])
 	const goishi_block_white = useRef<number[][][]>([])
 
@@ -31,6 +33,7 @@ const Goban = () => {
 
 	const taikyoku_tezyun = useRef<number>(0)
 	const tezyun = useRef<number[][]>([])
+	const tezyun_interval = useRef<any>()
 
 	const calculate_goban_css = (i: number, j: number) => {
 		const className = ""
@@ -57,8 +60,8 @@ const Goban = () => {
 	const initializeGoban = () => {
 		set_goban_state(initial_goban)
 		current_phase.current = "b"
-		set_banmen_goishi_black([])
-		set_banmen_goishi_white([])
+		banmen_goishi_black.current = []
+		banmen_goishi_white.current = []
 		current_goishi_block.current = []
 		goishi_block_black.current = []
 		goishi_block_white.current = []
@@ -82,13 +85,13 @@ const Goban = () => {
 		set_goban_state(goban_state_copy)
 
 		// banmen ishi
-		let banmen_goishi_black_copy = banmen_goishi_black.slice()
-		let banmen_goishi_white_copy = banmen_goishi_white.slice()
+		let banmen_goishi_black_copy = banmen_goishi_black.current.slice()
+		let banmen_goishi_white_copy = banmen_goishi_white.current.slice()
 
 		if (current_phase.current == "b") {
 			// banmen ishi black
 			banmen_goishi_black_copy.push([i, j])
-			set_banmen_goishi_black(banmen_goishi_black_copy)
+			banmen_goishi_black.current = banmen_goishi_black_copy
 		}
 		// calculate block
 		calculate_goishi_block(banmen_goishi_black_copy, banmen_goishi_white_copy)
@@ -96,7 +99,7 @@ const Goban = () => {
 		if (current_phase.current == "w") {
 			// banmen ishi white
 			banmen_goishi_white_copy.push([i, j])
-			set_banmen_goishi_white(banmen_goishi_white_copy)
+			banmen_goishi_white.current = banmen_goishi_white_copy
 		}
 		// calculate block
 		calculate_goishi_block(banmen_goishi_black_copy, banmen_goishi_white_copy)
@@ -145,7 +148,7 @@ const Goban = () => {
 			current_goishi_surrounding = current_goishi_surrounding.filter((s_g) => {
 				return s_g[0] != undefined
 			})
-			// console.log("surrounding goishi", current_goishi_block, current_goishi_surrounding)
+			console.log("surrounding goishi", current_goishi_block, current_goishi_surrounding)
 			let surrounding_flag = 0
 			for (const c_s_goishi of current_goishi_surrounding){
 				if (!is_2dimension_array_include(banmen_goishi_white_, c_s_goishi)) {
@@ -188,7 +191,7 @@ const Goban = () => {
 					const current_goishi_check = current_goishi_result.every((c_goishi_result) => {
 						return is_2dimension_array_include(banmen_goishi_black_, c_goishi_result)
 					})
-					console.log("current goishi check", current_goishi_check, current_goishi_result, banmen_goishi_black)
+					console.log("current goishi check", current_goishi_check, current_goishi_result, banmen_goishi_black.current)
 					if (current_goishi_check == true) {
 						console.log("----------- goishi check clear -----------")
 						return true
@@ -203,7 +206,7 @@ const Goban = () => {
 					}
 					return true
 				})
-				set_banmen_goishi_black(banmen_goishi_black_copy)
+				banmen_goishi_black.current = banmen_goishi_black_copy
 				// 着手を取り消し state
 				let goban_state_copy: string[][] = goban_state.slice()
 				goban_state_copy[current_move[0]][current_move[1]] = ""
@@ -292,7 +295,7 @@ const Goban = () => {
 					}
 					return true
 				})
-				set_banmen_goishi_black(banmen_goishi_white_copy)
+				banmen_goishi_black.current = banmen_goishi_white_copy
 				// 着手を取り消し state
 				let goban_state_copy: string[][] = goban_state.slice()
 				goban_state_copy[current_move[0]][current_move[1]] = ""
@@ -374,7 +377,7 @@ const Goban = () => {
 						})
 					}
 				})
-				set_banmen_goishi_black(banmen_goishi_black_copy)
+				banmen_goishi_black.current = banmen_goishi_black_copy
 				const goban_state_copy = goban_state
 				block.forEach((b) => {
 					goban_state_copy[b[0]][b[1]] = ""
@@ -397,7 +400,7 @@ const Goban = () => {
 						})
 					}
 				})
-				set_banmen_goishi_white(banmen_goishi_white_copy)
+				banmen_goishi_white.current = banmen_goishi_white_copy
 				const goban_state_copy = goban_state
 				block.forEach((b) => {
 					goban_state_copy[b[0]][b[1]] = ""
@@ -662,19 +665,35 @@ const Goban = () => {
 	}
 
 	const startTaikyoku1 = () => {
+		initializeGoban()
 		taikyoku_tezyun.current = 0
-		const tezyun1 = [[3, 3], [3, 15], [15, 3], [15, 15]]
-		const id = setInterval(() => {
+		tezyun_interval.current = setInterval(() => {
 			//
 			onClickMasu(tezyun.current[taikyoku_tezyun.current][0], tezyun.current[taikyoku_tezyun.current][1])
 			taikyoku_tezyun.current = taikyoku_tezyun.current + 1
 			if ( taikyoku_tezyun.current == tezyun.current.length ) {
-				clearInterval(id)
+				clearInterval(tezyun_interval.current)
+			}
+		}, 1000)
+	}
+
+	const stopTaikyoku1 = () => {
+		clearInterval(tezyun_interval.current)
+	}
+
+	const restartTaikyoku1 = () => {
+		tezyun_interval.current = setInterval(() => {
+			//
+			onClickMasu(tezyun.current[taikyoku_tezyun.current][0], tezyun.current[taikyoku_tezyun.current][1])
+			taikyoku_tezyun.current = taikyoku_tezyun.current + 1
+			if ( taikyoku_tezyun.current == tezyun.current.length ) {
+				clearInterval(tezyun_interval.current)
 			}
 		}, 1000)
 	}
 
 	const loadTaikyoku = (e: React.ChangeEvent<HTMLInputElement>) => {
+		initializeGoban()
 		if (!e.target.files) { return }
 		const inputFile = e.target.files[0]
 		const reader = new FileReader()
@@ -770,17 +789,22 @@ const Goban = () => {
 					<span>黒アゲハマ{agehama_black}個</span>
 					<span>白アゲハマ{agehama_white}個</span>
 					<br/>
-					<span>コウ [{ko[0]}, {ko[1]}]</span>
+					{/*<span>コウ [{ko[0]}, {ko[1]}]</span>*/}
 				</div>
 			</div>
 			<div>
-				<input
-					type="file"
-					accept="sgf"
-					onChange={(e) => loadTaikyoku(e)}
-				/>
-				<br/>
-				対局１：<button onClick={() => startTaikyoku1()}>開始</button>
+				<p>
+					SGFファイルを選択することで、棋譜を並べることができます。
+					<br/>
+					<input
+						type="file"
+						accept="sgf"
+						onChange={(e) => loadTaikyoku(e)}
+					/>
+				</p>
+				対局：	<button onClick={() => startTaikyoku1()}>開始</button>
+						<button onClick={() => stopTaikyoku1()}>停止</button>
+						<button onClick={() => restartTaikyoku1()}>再開始</button>
 			</div>
 		</>
 	)
