@@ -34,6 +34,7 @@ const Goban = () => {
 	const taikyoku_tezyun = useRef<number>(0)
 	const tezyun = useRef<number[][]>([])
 	const tezyun_interval = useRef<any>()
+	const [taikyoku_kekka, set_taikyoku_kekka] = useState<string>()
 
 	const calculate_goban_css = (i: number, j: number) => {
 		const className = ""
@@ -122,9 +123,11 @@ const Goban = () => {
 	}
 
 	const check_zisatu = (current_move: number[], banmen_goishi_black_: number[][], banmen_goishi_white_: number[][]) => {
+		// 現在の手が黒の場合
 		if (current_phase.current == "b") {
 			const goishi_block_black_copy = goishi_block_black.current
 			let current_goishi_block: number[][] = [];
+			// 現在の石が含まれる碁石ブロックを取得
 			goishi_block_black_copy.forEach((goban_black_b) => {
 				if ( is_2dimension_array_include(goban_black_b, current_move) ) {
 					current_goishi_block = goban_black_b
@@ -132,24 +135,41 @@ const Goban = () => {
 			})
 			let current_goishi_surrounding: number[][] = []
 			current_goishi_block.forEach((goishi: number[]) => {
+				// 周りの石を取得
 				const left_ishi		= goishi[1] - 1 > -1 ? [goishi[0], goishi[1] - 1] : []
 				const right_ishi 	= goishi[1] + 1 < GOMAN_WIDTH  ? [goishi[0], goishi[1] + 1] : []
 				const top_ishi		= goishi[0] + 1 < GOMAN_WIDTH  ? [goishi[0] + 1, goishi[1]] : []
 				const bottom_ishi	= goishi[0] - 1 > -1 ? [goishi[0] - 1, goishi[1]] : []
-				current_goishi_surrounding.push(left_ishi, right_ishi, top_ishi, bottom_ishi)
-			})
-			current_goishi_surrounding = current_goishi_surrounding.filter((x, i, self) => self.indexOf(x) === i)
-			current_goishi_surrounding = current_goishi_surrounding.filter((s_g) => {
-				if (is_2dimension_array_include(current_goishi_block, s_g)) {
-					return false
+				// 現在の碁石ブロック自身に碁石が含まれない場合、囲われているか判定配列に碁石を追加
+				if (left_ishi && !is_2dimension_array_include(current_goishi_block, left_ishi)) {
+					current_goishi_surrounding.push(left_ishi)
 				}
-				return true
+				if (right_ishi && !is_2dimension_array_include(current_goishi_block, right_ishi)) {
+					current_goishi_surrounding.push(right_ishi)
+				}
+				if (top_ishi && !is_2dimension_array_include(current_goishi_block, top_ishi)) {
+					current_goishi_surrounding.push(top_ishi)
+				}
+				if (bottom_ishi && !is_2dimension_array_include(current_goishi_block, bottom_ishi)) {
+					current_goishi_surrounding.push(bottom_ishi)
+				}
 			})
+			// 囲われているか判定配列から、ダブりを削除
+			current_goishi_surrounding = current_goishi_surrounding.filter((x, i, self) => self.indexOf(x) === i)
+			// current_goishi_surrounding = current_goishi_surrounding.filter((s_g) => {
+			// 	if (is_2dimension_array_include(current_goishi_block, s_g)) {
+			// 		return false
+			// 	}
+			// 	return true
+			// })
+			//
+			// 囲われているか判定配列から、[] を削除
 			current_goishi_surrounding = current_goishi_surrounding.filter((s_g) => {
 				return s_g[0] != undefined
 			})
 			console.log("surrounding goishi", current_goishi_block, current_goishi_surrounding)
 			let surrounding_flag = 0
+			// 囲われているか判定配列の碁石が、盤面の白石に含まれていたら、カウンターをプラス１
 			for (const c_s_goishi of current_goishi_surrounding){
 				if (!is_2dimension_array_include(banmen_goishi_white_, c_s_goishi)) {
 					break
@@ -160,6 +180,7 @@ const Goban = () => {
 				
 				const goishi_block_white_copy = goishi_block_white.current
 				let current_goishi_blocks: number[][][] = []
+				// 黒を囲んでいる白石の碁石ブロックを取得
 				for(const c_s_goishi of current_goishi_surrounding){
 					for (const b_b_goishi of goishi_block_white_copy) {
 						if (is_2dimension_array_include(b_b_goishi, c_s_goishi)) {
@@ -167,9 +188,10 @@ const Goban = () => {
 						}
 					}
 				}
-				console.log(current_goishi_blocks)
+				// console.log(current_goishi_blocks)
 				for(const c_b_goishi of current_goishi_blocks) {
 					let current_goishi_result: number[][] = []
+					// 黒を囲んでいる白石の碁石ブロックの上下左右の石を取得
 					for(const goishi of c_b_goishi) {
 						const left_ishi		= goishi[1] - 1 > -1 ? [goishi[0], goishi[1] - 1] : []
 						const right_ishi 	= goishi[1] + 1 < GOMAN_WIDTH  ? [goishi[0], goishi[1] + 1] : []
@@ -177,10 +199,13 @@ const Goban = () => {
 						const bottom_ishi	= goishi[0] - 1 > -1 ? [goishi[0] - 1, goishi[1]] : []
 						current_goishi_result.push(left_ishi, right_ishi, top_ishi, bottom_ishi)
 					}
+					// ダブりを削除
 					current_goishi_result = current_goishi_result.filter((x, i, self) => self.indexOf(x) === i)
+					// [] を削除
 					current_goishi_result = current_goishi_result.filter((s_g) => {
 						return s_g[0] != undefined
 					})
+					// 白石の碁石ブロックの碁石自身を削除
 					current_goishi_result = current_goishi_result.filter((c_g_r) => {
 						if (is_2dimension_array_include(c_b_goishi, c_g_r)) {
 							return false
@@ -188,10 +213,12 @@ const Goban = () => {
 						return true
 					})
 					console.log("current goishi results ", current_goishi_result)
+					// 黒を囲んでいる白石を囲んでいる黒があるか確認
 					const current_goishi_check = current_goishi_result.every((c_goishi_result) => {
 						return is_2dimension_array_include(banmen_goishi_black_, c_goishi_result)
 					})
 					console.log("current goishi check", current_goishi_check, current_goishi_result, banmen_goishi_black.current)
+					// 黒を囲んでいる白石を囲んでいる黒があった場合は、処理をスキップし、true を返す (自殺手ではない)
 					if (current_goishi_check == true) {
 						console.log("----------- goishi check clear -----------")
 						return true
@@ -306,6 +333,7 @@ const Goban = () => {
 	}
 
 	const calc_atari = (banmen_goishi_black_: number[][], banmen_goishi_white_: number[][], current_move: number[]) => {
+		// 各碁石ブロックで、碁石がアタリか判定する
 		goishi_block_black.current.forEach((b_block) => {
 			// console.log("----------- black -----------")
 			calc_atari_surround(b_block, banmen_goishi_white_, banmen_goishi_black_, current_move)
@@ -318,11 +346,16 @@ const Goban = () => {
 
 	const calc_atari_surround = (block: number[][], banmen: number[][], banmen_opposite: number[][], current_move: number[]) => {
 		let atari_goishi: number[][] = []
+		// 碁石ブロックの周りの碁石で for文
+		// アタリ碁石 (囲って碁石を取れる石) を取得
 		block.forEach((goishi) => {
+			// 碁石ブロックの各碁石で周りの石を取得
 			const left_ishi		= goishi[1] - 1 > -1 ? [goishi[0], goishi[1] - 1] : []
 			const right_ishi 	= goishi[1] + 1 < GOMAN_WIDTH ? [goishi[0], goishi[1] + 1] : []
 			const top_ishi		= goishi[0] + 1 < GOMAN_WIDTH ? [goishi[0] + 1, goishi[1]] : []
 			const bottom_ishi	= goishi[0] - 1 > -1 ? [goishi[0] - 1, goishi[1]] : []
+			// 碁石ブロック自身の碁石が周りの碁石の場合は、処理をスキップ
+			// それ以外の場合は、アタリ碁石配列に碁石を追加
 			if (left_ishi != [] && !is_2dimension_array_include(block, left_ishi)) {
 				atari_goishi.push(left_ishi)
 			}
@@ -336,7 +369,9 @@ const Goban = () => {
 				atari_goishi.push(bottom_ishi)
 			}
 		})
+		// アタリ碁石のかぶりを削除
 		atari_goishi = atari_goishi.filter((x, i, self) => self.indexOf(x) === i)
+		// アタリ碁石から、undefined を削除
 		atari_goishi = atari_goishi.filter((a_g) => {
 			return a_g[0] != undefined
 		})
@@ -349,6 +384,9 @@ const Goban = () => {
 		// console.log("atari goishi ", block, atari_goishi)
 		let atari_counter = 0
 		// console.log("atari evaluation : ", block)
+
+		// アタリ碁石に、敵の石が含まれているか確認
+		// 含まれていたら、カウンターをプラス１する
 		for (const atari_g of atari_goishi) {
 			if (!is_2dimension_array_include(banmen, atari_g)) {
 				break
@@ -356,17 +394,24 @@ const Goban = () => {
 			atari_counter += 1
 			// console.log("atari contains ", atari_g)
 		}
+		// アタリカウンターが、アタリ碁石の数と一致する場合に処理続行
 		if (atari_counter == atari_goishi.length) {
 			//
 			// console.log("atari gets")
+			// 白の場合
 			if (current_phase.current == "w") {
+				// ブロックに現在の手が含まれる場合は、コウか判定
 				if (is_2dimension_array_include(block, current_move)) {
 					judge_ko(current_move, banmen, banmen_opposite)
 					return
 				}
+				// 当たり判定が成立したので、碁石を取る処理を行う
 				let banmen_goishi_black_copy = banmen_opposite
 				// console.log("agehama get ", block.length)
+
+				// アゲハマを取る
 				set_agehama_black((agehama_black) => agehama_black + block.length)
+				// 現在の黒の碁石から、取られる碁石ブロックを削除する
 				block.forEach((b) => {
 					if (is_2dimension_array_include(banmen_goishi_black_copy, b)) {
 						banmen_goishi_black_copy = banmen_goishi_black_copy.filter((banmen_goishi_b) => {
@@ -378,11 +423,13 @@ const Goban = () => {
 					}
 				})
 				banmen_goishi_black.current = banmen_goishi_black_copy
+				// 現在の盤面から、取られる碁石ブロックを削除する
 				const goban_state_copy = goban_state
 				block.forEach((b) => {
 					goban_state_copy[b[0]][b[1]] = ""
 				})
 				set_goban_state(goban_state_copy)
+			// 黒の場合も、上の白の場合と同じ
 			} else if (current_phase.current == "b") {
 				if (is_2dimension_array_include(block, current_move)) {
 					judge_ko(current_move, banmen, banmen_opposite)
@@ -413,12 +460,16 @@ const Goban = () => {
 	// impl ko
 	const judge_ko = (current_move: number[], banmen: number[][], banmen_opposite: number[][]) => {
 		if ( current_phase.current == "w" ) {
+			// まずは白から、コウで取れる黒の石があるか確認
+			// 周りの石を取得
 			const left_ishi		= current_move[1] - 1 > -1 ? [current_move[0], current_move[1] - 1] : []
 			const right_ishi 	= current_move[1] + 1 < GOMAN_WIDTH  ? [current_move[0], current_move[1] + 1] : []
 			const top_ishi		= current_move[0] + 1 < GOMAN_WIDTH  ? [current_move[0] + 1, current_move[1]] : []
 			const bottom_ishi	= current_move[0] - 1 > -1 ? [current_move[0] - 1, current_move[1]] : []
+			// 周りの石１石の内容が入った配列を作る
 			let surrounding_ishi = [left_ishi, right_ishi, top_ishi, bottom_ishi]
 			surrounding_ishi = surrounding_ishi.filter((s_ishi) => s_ishi != [])
+			// 黒の碁石ブロックから、１石のブロックのみを取得 (取れる碁石は１石のみだから)
 			let goishi_block_black_copy = goishi_block_black.current
 			goishi_block_black_copy = goishi_block_black_copy.filter((goishi_b) => {
 				if (goishi_b.length == 1) {
@@ -428,6 +479,7 @@ const Goban = () => {
 			})
 			let left_ishi_result, right_ishi_result, top_ishi_result, bottom_ishi_result;
 			let ishi_result: (number[] | undefined)[] = []
+			// 周りの石が、１石の碁石ブロックに含まれるか確認
 			goishi_block_black_copy.forEach(goishi_b => {
 				const is_left_exist  = is_2dimension_array_include(goishi_b, left_ishi)
 				const is_right_exist = is_2dimension_array_include(goishi_b, right_ishi)
@@ -438,6 +490,7 @@ const Goban = () => {
 				if (is_top_exist) { top_ishi_result = top_ishi }
 				if (is_bottom_exist) { bottom_ishi_result = bottom_ishi }
 			})
+			// １石の碁石ブロックが含まれるものだけ、結果に挿入する
 			ishi_result.push(left_ishi_result)
 			ishi_result.push(right_ishi_result)
 			ishi_result.push(top_ishi_result)
@@ -447,22 +500,25 @@ const Goban = () => {
 				return true
 			})
 			ishi_result.forEach((ishi) => {
+				// １石の碁石の周りを取得
 				const left_ishi		= ishi![1] - 1 > -1 ? [ishi![0], ishi![1] - 1] : []
 				const right_ishi 	= ishi![1] + 1 < GOMAN_WIDTH ? [ishi![0], ishi![1] + 1] : []
 				const top_ishi		= ishi![0] + 1 < GOMAN_WIDTH ? [ishi![0] + 1, ishi![1]] : []
 				const bottom_ishi	= ishi![0] - 1 > -1 ? [ishi![0] - 1, ishi![1]] : []
-				//
+				// １石の周りを、黒が囲んでいるか確認
 				const left_ishi_exist = is_2dimension_array_include(banmen_opposite, left_ishi)
 				const right_ishi_exist = is_2dimension_array_include(banmen_opposite, right_ishi)
 				const top_ishi_exist = is_2dimension_array_include(banmen_opposite, top_ishi)
 				const bottom_ishi_exist = is_2dimension_array_include(banmen_opposite, bottom_ishi)
 				console.log("ko result", left_ishi, right_ishi, top_ishi, bottom_ishi)
+				// 全て囲われていたら、コウを State に登録
 				if ( left_ishi_exist && right_ishi_exist && top_ishi_exist && bottom_ishi_exist ) {
 					setKo([ishi![0], ishi![1]])
 				}
 			})
 			// console.log("goishi black", goishi_block_black_copy)
 			console.log("goishi block black", ishi_result)
+		// 上にある白の実装と同じ
 		} else if (current_phase.current == "b") {
 			const left_ishi		= current_move[1] - 1 > -1 ? [current_move[0], current_move[1] - 1] : []
 			const right_ishi 	= current_move[1] + 1 < GOMAN_WIDTH ? [current_move[0], current_move[1] + 1] : []
@@ -518,29 +574,30 @@ const Goban = () => {
 	}
 
 	const calculate_goishi_block = (banmen_goishi_black_copy: number[][], banmen_goishi_white_copy: number[][]) => {
-		let banmen_goishi_result = []
 		goishi_block_black.current = []
 		goishi_block_white.current = []
 		// if(current_phase == "b") {
+			// 盤面の石で for を回す
 			banmen_goishi_black_copy.forEach((ishi) => {
 				current_goishi_block.current = []
-				// check 
+				// 盤面の石がブロックに含まれてたら、処理をスキップ
 				const is_ishi_exist = is_2dimension_array_include(goishi_block_black.current.flat(), ishi)
 				if (is_ishi_exist) {
 					return
 				}
-				// add goishi to current goishi block
+				// 現在の碁石を、碁石ブロックの配列に追加
 				const current_goishi_block_copy = current_goishi_block.current
 				current_goishi_block_copy.push(ishi)
 				current_goishi_block.current = current_goishi_block_copy
-				// 
+				// 現在の碁石から、周りの石を探索をする
 				each_calculate_goishi_block(ishi, banmen_goishi_black_copy, "")
-				// 
+				// 黒の碁石ブロックに、現在の碁石ブロックを追加
 				const goishi_block_black_copy = goishi_block_black.current.slice()
 				goishi_block_black_copy.push(current_goishi_block.current)
 				goishi_block_black.current = goishi_block_black_copy
 			})
 		// } else if (current_phase == "w") {
+			// 上の黒の場合と同じ
 			banmen_goishi_white_copy.forEach((ishi) => {
 				current_goishi_block.current = []
 				const is_ishi_exist = is_2dimension_array_include(goishi_block_white.current.flat(), ishi)
@@ -562,6 +619,7 @@ const Goban = () => {
 	}
 
 	const each_calculate_goishi_block = (goishi: number[], banmen_goishi: number[][], houkou: string) => {
+		// 重複する碁石をフィルター
 		const filtered_current_goishi_block = current_goishi_block.current.filter((c) => {
 			if (c[0] == goishi[0] && c[1] == goishi[1]) {
 				return false
@@ -572,38 +630,47 @@ const Goban = () => {
 			console.log("Goishi stops @", goishi)
 			return
 		}
+		// 方向がないので、二次元空間と現在の二次元の位置を初期化
 		if (houkou == "") {
 			current_goishi_vector.current = [0, 0]
 			current_goishi_vector_array.current = [[0, 0]]
 		}
 
+		// 上下左右の石の情報
 		const left_ishi		= [goishi[0], goishi[1] - 1]
 		const right_ishi 	= [goishi[0], goishi[1] + 1]
 		const top_ishi		= [goishi[0] + 1, goishi[1]]
 		const bottom_ishi	= [goishi[0] - 1, goishi[1]]
-		const left_ishi_str		= goishi[0].toString() + (goishi[1] - 1).toString()
-		const right_ishi_str 	= goishi[0].toString() + (goishi[1] + 1).toString()
-		const top_ishi_str		= (goishi[0] + 1).toString() + goishi[1].toString()
-		const bottom_ishi_str	= (goishi[0] - 1).toString() + goishi[1].toString()
-		const banmen_goishi_flat: string[] = banmen_goishi.map((b) => b[0].toString() + b[1].toString())
+		const left_ishi_str		= goishi[0].toString() + "-" + (goishi[1] - 1).toString()
+		const right_ishi_str 	= goishi[0].toString() + "-" + (goishi[1] + 1).toString()
+		const top_ishi_str		= (goishi[0] + 1).toString() + "-" + goishi[1].toString()
+		const bottom_ishi_str	= (goishi[0] - 1).toString() + "-" + goishi[1].toString()
+		// 盤面の石の情報 (string)
+		const banmen_goishi_flat: string[] = banmen_goishi.map((b) => b[0].toString() + "-" + b[1].toString())
 
+		// 方向が右でなく、盤面の石に左の石が含まれている場合に処理を続ける
 		if (houkou != "right" && banmen_goishi_flat.includes(left_ishi_str)) {
 			const current_goishi_block_copy = current_goishi_block.current.slice()
-			// 
+			// 現在の碁石の二次元空間を取得
 			current_goishi_vector.current = [current_goishi_vector.current[0], current_goishi_vector.current[1] - 1]
+			// 二次元空間リストに現在の位置が含まれていたら、処理ストップ
 			if (is_2dimension_array_include(current_goishi_vector_array.current, current_goishi_vector.current)) {
 				// console.log("same vector found right", current_goishi_vector_array.current, current_goishi_vector.current)
 				return
 			}
+			// 二次元空間リストに、現在の位置を追加
 			const current_goishi_vector_array_copy = current_goishi_vector_array.current.slice()
 			current_goishi_vector_array_copy.push(current_goishi_vector.current)
 			current_goishi_vector_array.current = current_goishi_vector_array_copy
 			// 
 			// console.log("left find", left_ishi)
+			// 
+			// 現在の碁石ブロックに、左の石を追加し、そこから再起的に探索する
 			current_goishi_block_copy.push(left_ishi)
 			current_goishi_block.current = current_goishi_block_copy
 			each_calculate_goishi_block(left_ishi, banmen_goishi, "left")
 		}
+		// 「左の石」の場合と同じ
 		if (houkou != "left" && banmen_goishi_flat.includes(right_ishi_str)) {
 			const current_goishi_block_copy = current_goishi_block.current.slice()
 			// 
@@ -621,6 +688,7 @@ const Goban = () => {
 			current_goishi_block.current = current_goishi_block_copy
 			each_calculate_goishi_block(right_ishi, banmen_goishi, "right")
 		}
+		// 「左の石」の場合と同じ
 		if (houkou != "bottom" && banmen_goishi_flat.includes(top_ishi_str)) {
 			const current_goishi_block_copy = current_goishi_block.current.slice()
 			// 
@@ -638,6 +706,7 @@ const Goban = () => {
 			current_goishi_block.current = current_goishi_block_copy
 			each_calculate_goishi_block(top_ishi, banmen_goishi, "top")
 		}
+		// 「左の石」の場合と同じ
 		if (houkou != "top" && banmen_goishi_flat.includes(bottom_ishi_str)) {
 			const current_goishi_block_copy = current_goishi_block.current.slice()
 			// 
@@ -658,9 +727,9 @@ const Goban = () => {
 	}
 
 	const is_2dimension_array_include = (array: number[][], item: number[]) => {
-		const mapped_array = array.map((a) => a[0].toString() + a[1].toString())
+		const mapped_array = array.map((a) => a[0].toString() + "-" + a[1].toString())
 		if (!item[0] && !item[1]) { return false }
-		const mapped_item = item[0].toString() + item[1].toString()
+		const mapped_item = item[0].toString() + "-" + item[1].toString()
 		return mapped_array.includes(mapped_item) 
 	}
 
@@ -672,6 +741,7 @@ const Goban = () => {
 			onClickMasu(tezyun.current[taikyoku_tezyun.current][0], tezyun.current[taikyoku_tezyun.current][1])
 			taikyoku_tezyun.current = taikyoku_tezyun.current + 1
 			if ( taikyoku_tezyun.current == tezyun.current.length ) {
+				set_taikyoku_kekka("対局終了 @" + taikyoku_tezyun.current + "手")
 				clearInterval(tezyun_interval.current)
 			}
 		}, 1000)
@@ -790,6 +860,8 @@ const Goban = () => {
 					<span>白アゲハマ{agehama_white}個</span>
 					<br/>
 					{/*<span>コウ [{ko[0]}, {ko[1]}]</span>*/}
+					<br/>
+					<span>対局結果：{taikyoku_kekka}</span>
 				</div>
 			</div>
 			<div>
